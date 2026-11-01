@@ -403,6 +403,10 @@ cd <仓库路径> && git pull && bash install.sh
 
 Issue / PR 欢迎。跑 `python3 -m pytest tests/ -q` 与 `python3 scripts/context_budget.py --budget-tokens 15500` 保持绿灯（CI 同款检查）。
 
+## 📝 更新日志
+
+当前版本 **4.3.0**。完整变更、方法与升级提示见 [CHANGELOG.md](CHANGELOG.md)。
+
 ## 📄 License
 
 MIT。本项目基于 [imraywang/wewrite](https://github.com/imraywang/wewrite)，上游版权归 OpenClaw；本仓库的修改与持续开发由 Madara 维护。详见 [NOTICE](NOTICE)。
