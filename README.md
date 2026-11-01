@@ -14,7 +14,7 @@
 
 </div>
 
-> 本项目基于 [imraywang/wewrite](https://github.com/imraywang/wewrite) 继续开发，上游采用 MIT 许可；当前仓库由 Madara 维护，后续改动、问题与发布以本仓库为准。
+> 本项目基于 [imraywang/wewrite](https://github.com/imraywang/wewrite) 继续开发，上游采用 MIT 许可；当前仓库由 Marcus 维护，后续改动、问题与发布以本仓库为准。
 
 ---
 
@@ -405,8 +405,8 @@ Issue / PR 欢迎。跑 `python3 -m pytest tests/ -q` 与 `python3 scripts/conte
 
 ## 📝 更新日志
 
-当前版本 **4.3.0**。完整变更、方法与升级提示见 [CHANGELOG.md](CHANGELOG.md)；发布说明见 [v4.3.0 Release](https://github.com/wyshn/wewrite/releases/tag/v4.3.0)。
+当前版本 **4.3.1**。完整变更、方法与升级提示见 [CHANGELOG.md](CHANGELOG.md)；发布说明见 [v4.3.1 Release](https://github.com/wyshn/wewrite/releases/tag/v4.3.1)。
 
 ## 📄 License
 
-MIT。本项目基于 [imraywang/wewrite](https://github.com/imraywang/wewrite)，上游版权归 OpenClaw；本仓库的修改与持续开发由 Madara 维护。详见 [NOTICE](NOTICE)。
+MIT。本项目基于 [imraywang/wewrite](https://github.com/imraywang/wewrite)，上游版权归 OpenClaw；本仓库的修改与持续开发由 Marcus 维护。详见 [NOTICE](NOTICE)。

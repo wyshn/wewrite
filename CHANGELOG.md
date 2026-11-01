@@ -2,6 +2,24 @@
 
 > 4.2.1 及更早版本来自 upstream [imraywang/wewrite](https://github.com/imraywang/wewrite)。本文件从 4.3.0 开始记录本仓库的变更。
 
+## 4.3.1 — 2026-11-01
+
+> 发布页：[v4.3.1](https://github.com/wyshn/wewrite/releases/tag/v4.3.1)
+
+补全 4.3.0 的 tag 快照，并更正维护者署名。
+
+### 文档修正
+
+- `CHANGELOG.md` 的发布页链接、`README.md` 的更新日志链接进入 4.3.1 tag 快照。
+- 维护者署名由 `Madara` 更正为 `Marcus`（README、LICENSE、NOTICE、Release 说明）。
+- 4.3.0 Release 说明同步更正署名；历史 tag `v4.3.0` 快照保持不变。
+
+### 验证
+
+- `python3 -m pytest tests/ -q`：136 passed
+- `git show v4.3.1:CHANGELOG.md` 包含 Release 链接与 Marcus 署名
+- `git show v4.3.1:NOTICE` 包含 `Copyright (c) 2026 Marcus`
+
 ## 4.3.0 — 2026-11-01
 
 > 发布页：[v4.3.0](https://github.com/wyshn/wewrite/releases/tag/v4.3.0)
@@ -15,7 +33,7 @@
 - **`wewrite draft-delete <media_id>`**：封装微信 `draft/delete`，用于清理旧版草稿；凭据走 `config.yaml`，也支持 `--appid/--secret`。
 - **`wewrite output-check`**：校验 `~/.wewrite/output` 的目录契约，检查必需文件、图片体积、相对路径、密钥文件与 `ai-daily-report` 残留。
 - **CodeBuddy 安装支持**：`install.sh` 现在会把 10 个 skill 链接到 `~/.codebuddy/skills`，同时保留 `~/.claude/skills`、`~/.agents/skills`、OpenClaw 和 Codex 目录。
-- **归属文件**：新增 `NOTICE`；`LICENSE` 同时保留 upstream（OpenClaw）与修改方（Madara）版权。
+- **归属文件**：新增 `NOTICE`；`LICENSE` 同时保留 upstream（OpenClaw）与修改方（Marcus）版权。
 
 ### 修复
 
