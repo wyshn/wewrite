@@ -29,11 +29,13 @@ class ConvertResult:
 class WeChatConverter:
     """Convert Markdown to WeChat-compatible inline-style HTML."""
 
-    def __init__(self, theme: Optional[Theme] = None, theme_name: str = "professional-clean"):
+    def __init__(self, theme: Optional[Theme] = None, theme_name: str = "professional-clean",
+                 aigc_footer: Optional[bool] = None):
         if theme is not None:
             self._theme = theme
         else:
             self._theme = load_theme(theme_name)
+        self._aigc_footer = aigc_footer
         self._css_rules = get_inline_css_rules(self._theme)
 
     def convert(self, markdown_text: str) -> ConvertResult:
@@ -91,7 +93,10 @@ class WeChatConverter:
         # Append AIGC declaration footer by default（合规：AI 生成/辅助内容需标识；
         # 主题或配置显式设 aigc_footer: false 才关闭）。
         raw = getattr(self._theme, '_raw_data', {}) or {}
-        aigc = raw.get('aigc_footer', self._theme.colors.get('aigc_footer', True))
+        if self._aigc_footer is None:
+            aigc = raw.get('aigc_footer', self._theme.colors.get('aigc_footer', True))
+        else:
+            aigc = self._aigc_footer
         if aigc:
             html = self._append_aigc_footer(html)
 
@@ -247,14 +252,15 @@ class WeChatConverter:
     # -- CJK compatibility fixes --
 
     def _fix_cjk_spacing(self, text: str) -> str:
-        """Auto-insert thin space between CJK and Latin/digit characters.
+        """Auto-insert a space between CJK ideographs and Latin/digit characters.
 
         WeChat renders CJK-Latin without spacing, making mixed text hard to read.
-        This inserts a thin space (U+200A) at CJK↔Latin boundaries.
-        Runs on raw Markdown before parsing, skipping code blocks and links.
+        Only ideographs participate: Chinese punctuation (，。；：、) must not get
+        spaces before or after it. Runs on raw Markdown before parsing, skipping
+        fenced code blocks.
         """
-        # CJK unicode ranges
-        cjk = r'[\u4e00-\u9fff\u3400-\u4dbf\u3000-\u303f\uff00-\uffef]'
+        # 只匹配汉字区；\u3000-\u303f / \uff00-\uffef 里的中文标点不参与
+        cjk = r'[\u4e00-\u9fff\u3400-\u4dbf]'
         latin = r'[A-Za-z0-9]'
 
         lines = text.split('\n')
@@ -659,7 +665,7 @@ class WeChatConverter:
         """Append AIGC declaration footer as required by WeChat platform rules."""
         footer = ('<p style="text-align: center; font-size: 13px; color: #9ca3af; '
                   'margin-top: 48px; padding-top: 24px; border-top: 1px solid #e5e7eb;">'
-                  '本文由 AI 辅助创作，作者进行了实测验证和编辑修改。</p>')
+                  '本文由 AI 辅助创作，作者进行了编辑与校对。</p>')
         return html + '\n' + footer
 
     def _process_highlight(self, text: str) -> str:

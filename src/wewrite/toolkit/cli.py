@@ -15,7 +15,7 @@ from pathlib import Path
 
 from .converter import WeChatConverter, make_paste_safe, preview_html
 from .theme import load_theme, list_themes
-from .wechat_api import get_access_token, upload_image, upload_thumb
+from .wechat_api import delete_draft, get_access_token, upload_image, upload_thumb
 from .publisher import create_draft, create_image_post
 from .config import load_config
 
@@ -31,7 +31,10 @@ def _print_validation(body_html: str) -> None:
 def cmd_preview(args):
     """Generate HTML preview and open in browser."""
     theme = load_theme(args.theme)
-    converter = WeChatConverter(theme=theme)
+    converter = WeChatConverter(
+        theme=theme,
+        aigc_footer=False if getattr(args, "no_aigc_footer", False) else None,
+    )
     result = converter.convert_file(args.input)
 
     _print_validation(result.html)
@@ -73,7 +76,10 @@ def cmd_publish(args):
         sys.exit(1)
 
     theme = load_theme(theme_name)
-    converter = WeChatConverter(theme=theme)
+    converter = WeChatConverter(
+        theme=theme,
+        aigc_footer=False if getattr(args, "no_aigc_footer", False) else None,
+    )
     result = converter.convert_file(args.input)
 
     _print_validation(result.html)
@@ -129,6 +135,23 @@ def cmd_publish(args):
     )
 
     print(f"\nDraft created! media_id: {draft.media_id}")
+
+
+def cmd_draft_delete(args):
+    """Delete a WeChat draft by media_id."""
+    cfg = load_config()
+    wechat_cfg = cfg.get("wechat", {})
+
+    appid = args.appid or wechat_cfg.get("appid")
+    secret = args.secret or wechat_cfg.get("secret")
+
+    if not appid or not secret:
+        print("Error: --appid and --secret required (or set in config.yaml)", file=sys.stderr)
+        sys.exit(1)
+
+    token = get_access_token(appid, secret)
+    delete_draft(token, args.media_id)
+    print(f"Draft deleted: {args.media_id}")
 
 
 def cmd_themes(args):
@@ -374,6 +397,7 @@ def main():
     p_preview.add_argument("-o", "--output", help="Output HTML file path")
     p_preview.add_argument("--no-open", action="store_true", help="Don't open browser")
     p_preview.add_argument("--no-paste-safe", action="store_true", help="不做粘贴加固（leaf 包裹）")
+    p_preview.add_argument("--no-aigc-footer", action="store_true", help="不追加文末 AI 声明")
 
     # publish
     p_publish = sub.add_parser("publish", help="Convert and publish as WeChat draft")
@@ -385,9 +409,16 @@ def main():
     p_publish.add_argument("--title", help="Override article title")
     p_publish.add_argument("--author", default=None, help="Article author")
     p_publish.add_argument("--digest", default=None, help="Override article digest (≤120 UTF-8 bytes)")
+    p_publish.add_argument("--no-aigc-footer", action="store_true", help="不追加文末 AI 声明")
 
     # themes
     sub.add_parser("themes", help="List available themes")
+
+    # draft-delete
+    p_draft_delete = sub.add_parser("draft-delete", help="Delete a WeChat draft by media_id")
+    p_draft_delete.add_argument("media_id", help="Draft media_id")
+    p_draft_delete.add_argument("--appid", default=None, help="WeChat AppID (or set in config.yaml)")
+    p_draft_delete.add_argument("--secret", default=None, help="WeChat AppSecret (or set in config.yaml)")
 
     # image-post (小绿书)
     p_imgpost = sub.add_parser("image-post", help="Create WeChat image post (小绿书)")
@@ -417,6 +448,8 @@ def main():
             cmd_publish(args)
         elif args.command == "themes":
             cmd_themes(args)
+        elif args.command == "draft-delete":
+            cmd_draft_delete(args)
         elif args.command == "image-post":
             cmd_image_post(args)
         elif args.command == "gallery":

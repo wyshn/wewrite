@@ -138,3 +138,25 @@ def upload_thumb(access_token: str, image_path: str) -> str:
         raise ValueError(f"WeChat upload_thumb error: errcode={errcode}, errmsg={errmsg}")
 
     return data["media_id"]
+
+
+def delete_draft(access_token: str, media_id: str) -> None:
+    """
+    Delete a draft by media_id.
+    API: POST https://api.weixin.qq.com/cgi-bin/draft/delete
+    Raise ValueError on error.
+    """
+    resp = requests.post(
+        "https://api.weixin.qq.com/cgi-bin/draft/delete",
+        params={"access_token": access_token},
+        json={"media_id": media_id},
+        timeout=API_TIMEOUT,
+    )
+
+    data = resp.json()
+
+    if data.get("errcode", 0) != 0:
+        raise ValueError(
+            f"WeChat delete_draft error: errcode={data.get('errcode')}, "
+            f"errmsg={data.get('errmsg', 'unknown error')}"
+        )

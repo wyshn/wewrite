@@ -156,6 +156,22 @@ class TestCJKSpacing:
         plain = BeautifulSoup(result.html, "html.parser").get_text()
         assert "有 100" in plain or "有 100" in plain
 
+    def test_no_space_before_chinese_punctuation(self, converter):
+        md = "# T\n\nADE，Agent 和 git worktree；"
+        result = converter.convert(md)
+        plain = BeautifulSoup(result.html, "html.parser").get_text()
+        assert "ADE，" in plain
+        assert "worktree；" in plain
+        assert "ADE ，" not in plain
+        assert "worktree ；" not in plain
+
+    def test_no_space_after_chinese_punctuation_before_latin(self, converter):
+        md = "# T\n\n中文，abc"
+        result = converter.convert(md)
+        plain = BeautifulSoup(result.html, "html.parser").get_text()
+        assert "中文，abc" in plain
+        assert "中文， abc" not in plain
+
     def test_code_block_not_affected(self, converter):
         md = "# T\n\n```\n中文abc\n```"
         result = converter.convert(md)
@@ -308,12 +324,23 @@ class TestAIGCFooter:
         result = converter.convert("# T\n\n内容")
         assert "AI 辅助创作" in result.html
 
+    def test_footer_does_not_claim_hands_on_testing(self, converter):
+        """默认声明不能替所有文章声称做过实测。"""
+        result = converter.convert("# T\n\n内容")
+        assert "作者进行了编辑与校对" in result.html
+        assert "实测验证" not in result.html
+
     def test_aigc_footer_can_be_disabled(self, pro_theme):
         """aigc_footer: false 显式关闭脚注。"""
         data = dict(getattr(pro_theme, "_raw_data", {}) or {})
         data["aigc_footer"] = False
         pro_theme._raw_data = data
         result = WeChatConverter(theme=pro_theme).convert("# T\n\n内容")
+        assert "AI 辅助创作" not in result.html
+
+    def test_aigc_footer_can_be_disabled_by_constructor(self, pro_theme):
+        """单篇文章可通过构造参数关闭脚注，不影响其他文章。"""
+        result = WeChatConverter(theme=pro_theme, aigc_footer=False).convert("# T\n\n内容")
         assert "AI 辅助创作" not in result.html
 
 

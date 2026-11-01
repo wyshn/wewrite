@@ -75,6 +75,20 @@ def test_diagnose_accepts_multi_provider_image_config(tmp_path, monkeypatch):
     assert diagnose.runtime_flags(checks)["skip_image_gen"] is False
 
 
+def test_diagnose_accepts_dreamina_without_api_key(tmp_path, monkeypatch):
+    path = tmp_path / "config.yaml"
+    path.write_text(
+        yaml.safe_dump({"image": {"provider": "dreamina"}}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(diagnose.paths, "config_path", lambda: path)
+    monkeypatch.setattr(diagnose.shutil, "which", lambda name: "/usr/local/bin/dreamina")
+    checks = diagnose.check_config()
+    image_check = next(c for c in checks if c["name"] == "image_api_key")
+    assert image_check["status"] == "pass"
+    assert diagnose.runtime_flags(checks)["skip_image_gen"] is False
+
+
 def test_missing_style_requires_onboard_without_failure(tmp_path, monkeypatch):
     monkeypatch.setattr(diagnose.paths, "style_path", lambda: tmp_path / "missing.yaml")
     checks = diagnose.check_style()

@@ -8,7 +8,7 @@ wechat:
   author: ""  # 默认署名（可选）
 
 # AI 图片生成
-# 支持 10 个 provider，配一个就能用，配多个自动 fallback。
+# 支持 11 个 provider，配一个就能用，配多个自动 fallback。
 #
 # ┌─────────────────┬────────────────────────────────────────────────┬────────────────────┐
 # │ Provider        │ 获取 API Key                                   │ 特点               │
@@ -16,6 +16,7 @@ wechat:
 # │ doubao          │ https://console.volcengine.com/ark             │ 中文提示词最优     │
 # │ dashscope       │ https://dashscope.console.aliyun.com/          │ 阿里通义万相       │
 # │ jimeng          │ https://console.volcengine.com/iam             │ 字节即梦，中文强   │
+# │ dreamina        │ 安装 CLI 后执行 dreamina login                 │ 即梦额度，无需 Key │
 # │ minimax         │ https://platform.minimaxi.com/                 │ 国内 provider      │
 # │ openai          │ https://platform.openai.com/api-keys           │ DALL-E，通用性强   │
 # │ azure_openai    │ Azure Portal                                   │ 国内可访问的 OpenAI│
@@ -25,7 +26,7 @@ wechat:
 # │ sub2api          │ 自建 Sub2API 服务                              │ OpenAI 兼容聚合层  │
 # └─────────────────┴────────────────────────────────────────────────┴────────────────────┘
 #
-# 支持两种配置方式：
+# 支持三种配置方式：
 
 # 方式一：单 provider（简单用法，填一个就行）
 image:
@@ -68,6 +69,15 @@ image:
 #     - provider: replicate
 #       api_key: "r8_..."
 #       # model: "google/nano-banana-pro"
+
+# 方式三：即梦 CLI（走账号额度，不需要 API Key）
+# 需先安装 CLI 并执行 `dreamina login`
+# image:
+#   provider: "dreamina"
+#   model: "5.0"        # 5.0 / 5.0Pro
+#   resolution: "2k"    # 2k / 4k；5.0Pro 额外支持 1.5k
+#   max_workers: 2      # 即梦标准账号并发有限，批量时建议压低
+#   estimated_cost_per_image: 0.03
 
 # 默认排版主题
 theme: "professional-clean"

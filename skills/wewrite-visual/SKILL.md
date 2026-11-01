@@ -39,7 +39,7 @@ allowed-tools:
 2. 写一个封面提示词。`cover` 模式到此为止；`full` 模式只为确实需要解释或缓冲阅读的
    段落补图，不按固定数量凑图。
 3. 将提示词和目标路径写到 `artifacts.image_prompts`；批量清单写到
-   `artifacts.images_manifest`。
+   `artifacts.images_manifest`。需要延续既有视觉时，在条目里加 `refs`（本机图片路径，1-10 张）。
 4. 数量必须不超过任务的 `visual.max_images`。调用时同时传入数量和费用上限：
 
 ```bash

@@ -1,0 +1,16 @@
+WeWrite
+=======
+
+This repository is a continuation of imraywang/wewrite:
+
+  https://github.com/imraywang/wewrite
+
+Upstream commit used as the base: 2860fbe
+Upstream license: MIT
+Upstream copyright: Copyright (c) 2026 OpenClaw
+
+Modifications and continued development:
+Copyright (c) 2026 Madara
+
+The MIT license in LICENSE applies to both the upstream work and the
+modifications in this repository.

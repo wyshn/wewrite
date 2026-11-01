@@ -6,18 +6,19 @@
 
 选题 · 写作 · 编辑审稿 · 可选 AI 配图 · 18 主题排版 · 草稿箱推送 · 多平台改写 · 越用越像你
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/imraywang/wewrite/blob/main/LICENSE)
-[![Checks](https://github.com/imraywang/wewrite/actions/workflows/checks.yml/badge.svg)](https://github.com/imraywang/wewrite/actions/workflows/checks.yml)
-[![PyPI](https://img.shields.io/pypi/v/wewrite?color=059669&label=PyPI)](https://pypi.org/project/wewrite/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/wyshn/wewrite/blob/main/LICENSE)
+[![Checks](https://github.com/wyshn/wewrite/actions/workflows/checks.yml/badge.svg)](https://github.com/wyshn/wewrite/actions/workflows/checks.yml)
 [![Skills](https://img.shields.io/badge/skills-1%20主入口%20%2B%209%20模块-8b5cf6)](#-模块速查)
 [![Themes](https://img.shields.io/badge/themes-18%20%2B%20learn--theme-f59e0b)](#-排版引擎)
-[![Agents](https://img.shields.io/badge/Claude%20Code%20·%20Codex%20·%20OpenClaw%20·%20Hermes-supported-6366f1)](#-快速开始)
+[![Agents](https://img.shields.io/badge/CodeBuddy%20·%20Claude%20Code%20·%20Codex%20·%20OpenClaw%20·%20Hermes-supported-6366f1)](#-快速开始)
 
 </div>
 
+> 本项目基于 [imraywang/wewrite](https://github.com/imraywang/wewrite) 继续开发，上游采用 MIT 许可；当前仓库由 Madara 维护，后续改动、问题与发布以本仓库为准。
+
 ---
 
-一个给 AI Agent（Claude Code / Codex / OpenClaw / Hermes 等）用的公众号内容 Skill。你说「写一篇公众号文章」，它会抓热点、评选题、搜真实素材、按你的人格风格出稿并完成编辑审稿。正文完成后，你可以直接交付，也可以再单独要求配图、排版预览或推送草稿箱。原始正文始终保留；配图会生成独立图片和带图副本。想改就按自己的意思改，再让它「学习我的修改」，下一篇会更像你。
+一个给 AI Agent（CodeBuddy / Claude Code / Codex / OpenClaw / Hermes 等）用的公众号内容 Skill。你说「写一篇公众号文章」，它会抓热点、评选题、搜真实素材、按你的人格风格出稿并完成编辑审稿。正文完成后，你可以直接交付，也可以再单独要求配图、排版预览或推送草稿箱。原始正文始终保留；配图会生成独立图片和带图副本。想改就按自己的意思改，再让它「学习我的修改」，下一篇会更像你。
 
 ```
 "写一篇公众号文章"
@@ -45,18 +46,18 @@
 
 ## 👀 效果预览
 
-同一篇示例文章（[docs/demo-article.md](https://github.com/imraywang/wewrite/blob/main/docs/demo-article.md)）× 6 个主题，`wewrite preview` 真实渲染长图（含 label 小标签、steps 步骤卡、callout / timeline / quote / summary 组件与 AIGC 声明脚注）：
+同一篇示例文章（[docs/demo-article.md](docs/demo-article.md)）× 6 个主题，`wewrite preview` 真实渲染长图（含 label 小标签、steps 步骤卡、callout / timeline / quote / summary 组件与 AIGC 声明脚注）：
 
 <table>
 <tr>
-<td width="33%" align="center"><img src="https://raw.githubusercontent.com/imraywang/wewrite/main/docs/screenshots/professional-clean.png" width="250"><br><sub><b>professional-clean（默认）</b></sub></td>
-<td width="33%" align="center"><img src="https://raw.githubusercontent.com/imraywang/wewrite/main/docs/screenshots/sspai.png" width="250"><br><sub><b>sspai</b></sub></td>
-<td width="33%" align="center"><img src="https://raw.githubusercontent.com/imraywang/wewrite/main/docs/screenshots/warm-editorial.png" width="250"><br><sub><b>warm-editorial</b></sub></td>
+<td width="33%" align="center"><img src="docs/screenshots/professional-clean.png" width="250"><br><sub><b>professional-clean（默认）</b></sub></td>
+<td width="33%" align="center"><img src="docs/screenshots/sspai.png" width="250"><br><sub><b>sspai</b></sub></td>
+<td width="33%" align="center"><img src="docs/screenshots/warm-editorial.png" width="250"><br><sub><b>warm-editorial</b></sub></td>
 </tr>
 <tr>
-<td width="33%" align="center"><img src="https://raw.githubusercontent.com/imraywang/wewrite/main/docs/screenshots/tech-modern.png" width="250"><br><sub><b>tech-modern</b></sub></td>
-<td width="33%" align="center"><img src="https://raw.githubusercontent.com/imraywang/wewrite/main/docs/screenshots/bauhaus.png" width="250"><br><sub><b>bauhaus</b></sub></td>
-<td width="33%" align="center"><img src="https://raw.githubusercontent.com/imraywang/wewrite/main/docs/screenshots/midnight.png" width="250"><br><sub><b>midnight</b></sub></td>
+<td width="33%" align="center"><img src="docs/screenshots/tech-modern.png" width="250"><br><sub><b>tech-modern</b></sub></td>
+<td width="33%" align="center"><img src="docs/screenshots/bauhaus.png" width="250"><br><sub><b>bauhaus</b></sub></td>
+<td width="33%" align="center"><img src="docs/screenshots/midnight.png" width="250"><br><sub><b>midnight</b></sub></td>
 </tr>
 </table>
 
@@ -73,25 +74,25 @@
 ### 方式一：一键安装（推荐）
 
 ```bash
-git clone --depth 1 https://github.com/imraywang/wewrite.git ~/wewrite
+git clone --depth 1 https://github.com/wyshn/wewrite.git ~/wewrite
 cd ~/wewrite && bash install.sh
 ```
 
-`install.sh` 做三件事：装 `wewrite` CLI（uv/pipx，无则回退 venv）、把 10 个 skill 链接到 `~/.claude/skills/` 与 `~/.agents/skills/`（检测到 OpenClaw / Codex 时一并链接其 skills 目录）、把旧版用户状态迁到 `~/.wewrite/`。
+`install.sh` 做三件事：装 `wewrite` CLI（uv/pipx，无则回退 venv）、把 10 个 skill 链接到 `~/.codebuddy/skills`、`~/.claude/skills` 与 `~/.agents/skills`（检测到 OpenClaw / Codex 时一并链接其 skills 目录）、把旧版用户状态迁到 `~/.wewrite/`。
 
 ### 方式二：skills.sh 按需挑模块
 
 ```bash
-npx skills add imraywang/wewrite
+npx skills add wyshn/wewrite
 ```
 
-skill 目录自包含、复制即用；CLI 另装一条：`uv tool install wewrite`（或 `pipx install wewrite`）。
+skill 目录自包含、复制即用；CLI 另装一条：`uv tool install git+https://github.com/wyshn/wewrite.git`（或 `pipx install git+https://github.com/wyshn/wewrite.git`）。
 
 ### 方式三：让 AI 自己装
 
 对任意 Agent 说一句：
 
-> 请帮我安装 https://github.com/imraywang/wewrite 这个 skill（跑仓库里的 install.sh）
+> 请帮我安装 https://github.com/wyshn/wewrite 这个 skill（跑仓库里的 install.sh）
 
 装好后直接开聊：
 
@@ -109,22 +110,22 @@ skill 目录自包含、复制即用；CLI 另装一条：`uv tool install wewri
 ```
 
 <details>
-<summary><b>OpenClaw / Codex / Hermes</b>（三家均原生支持 folder-per-skill，无需构建转换）</summary>
+<summary><b>CodeBuddy / OpenClaw / Codex / Hermes</b>（均原生支持 folder-per-skill，无需构建转换）</summary>
 
-**OpenClaw / Codex**：方式一的 `install.sh` 检测到 `~/.openclaw` / `~/.codex` 时已自动链接。手动装：
+**CodeBuddy / OpenClaw / Codex**：方式一的 `install.sh` 已把 skill 链接到 `~/.codebuddy/skills`，并在检测到 `~/.openclaw` / `~/.codex` 时一并链接。手动装：
 
 ```bash
-for s in ~/wewrite/skills/wewrite*; do ln -sfn "$s" ~/.openclaw/skills/$(basename "$s"); done
-# Codex 同理，目标换成 ~/.codex/skills/
+for s in ~/wewrite/skills/wewrite*; do ln -sfn "$s" ~/.codebuddy/skills/$(basename "$s"); done
+# OpenClaw / Codex 同理，目标换成 ~/.openclaw/skills/ 或 ~/.codex/skills/
 ```
 
 **Hermes**（自带技能管理器）：
 
 ```bash
-hermes skills install imraywang/wewrite
+hermes skills install wyshn/wewrite
 ```
 
-各家均需 CLI 在 PATH：`uv tool install wewrite`。
+各家均需 CLI 在 PATH：`uv tool install git+https://github.com/wyshn/wewrite.git`。
 
 </details>
 
@@ -161,8 +162,21 @@ cp config.example.yaml ~/.wewrite/config.yaml
 | 层 | 位置 | 内容 |
 |----|------|------|
 | Prompt | `skills/`（10 个自包含 skill） | 选题、事实、观点、实用性和表达判断，每个 skill 自带 references/ |
-| Runtime | `wewrite` CLI（pip 包） | 打分、转 HTML、调微信 API、生图、成本路由——确定性操作 |
+| Runtime | `wewrite` CLI（Python 包） | 打分、转 HTML、调微信 API、生图、成本路由——确定性操作 |
 | State | `~/.wewrite/`（`WEWRITE_HOME` 可覆盖） | 凭证、风格、历史、学习产物、输出文件——全部在仓库外 |
+
+### 内容产出目录
+
+| 路径 | 放什么 |
+|---|---|
+| `~/.wewrite/runs/<run_id>/` | 过程产物：任务书、主张、来源、初稿、审稿报告、配图清单 |
+| `~/.wewrite/output/<slug>/` | 交付物：`article.md`、`article-illustrated.md`、`preview.html`、`cover.png`、`images/`、`review-report.json` |
+
+不要在仓库内新建 `daily/`、`pushes/`、`reports/` 之类的内容目录；仓库只保留代码、skill、文档和示例。每次交付前跑：
+
+```bash
+wewrite output-check
+```
 
 skill 目录复制到哪都能用；CLI 与 skill 独立安装升级；换机器只需带走 `~/.wewrite/`。
 
@@ -183,7 +197,8 @@ skill 目录复制到哪都能用；CLI 与 skill 独立安装升级；换机器
 | 风险提示 | 11 项机械检查，定位套话、碎句、重复节奏等；不判断作者身份 | `wewrite score` |
 | SEO 优化 | 标题策略 / 摘要 / 关键词 / 标签 | wewrite-review |
 | 视觉 AI | 按任务设置生成封面/必要配图，生成前检查数量和预估费用 | `wewrite image-gen` |
-| 排版发布 | 18+ 主题 + 微信兼容修复 + 暗黑模式 | `wewrite preview/publish` |
+| 排版发布 | 18+ 主题 + 微信兼容修复 + 暗黑模式 | `wewrite preview/publish/draft-delete` |
+| 产出校验 | 检查 output 目录的必需文件、图片体积与相对路径 | `wewrite output-check` |
 | 多平台改写 | 一稿 → 小红书/抖音，内容级真改 + 原创度门 | wewrite-rewrite |
 | 效果复盘 | 微信数据分析 API 回填阅读数据，反哺选题 | `wewrite stats` |
 | 范文风格库 | 从文章提取结构与节奏；第三方内容不提供观点和个人经历 | `wewrite exemplar` |
@@ -225,7 +240,7 @@ WeWrite 的目标是**写出准确、有观点、对读者有用的文章**。�
 
 每篇任务保留 `brief.yaml`、`claims.yaml`、`draft.md`、`article.md` 和
 `review-report.json`，方便追溯“为什么这样写”和初稿到成稿改了多少。完整标准见
-[`docs/content-quality-rubric.md`](https://github.com/imraywang/wewrite/blob/main/docs/content-quality-rubric.md)。
+[`docs/content-quality-rubric.md`](docs/content-quality-rubric.md)。
 
 ## 🎨 排版引擎
 
@@ -295,6 +310,7 @@ wewrite themes     # 列出主题名称
 ```bash
 wewrite preview article.md --theme sspai            # Markdown → 微信 HTML 预览
 wewrite publish article.md --cover cover.png --title "标题"   # 推送草稿箱
+wewrite draft-delete <media_id>                    # 删除草稿（清理旧版本）
 wewrite image-post p1.jpg p2.jpg -t "周末探店"       # 小绿书/图片帖（横滑轮播）
 wewrite score article.md --verbose                  # 写作质量评分（11 项检测）
 wewrite content-eval --draft draft.md --final article.md --assessment assessment.yaml --json # 编辑结果
@@ -305,6 +321,7 @@ wewrite exemplar article.md / --list                # 范文风格库
 wewrite fetch-article <url> -o out.md               # 公众号文章 → Markdown
 wewrite learn-theme <url> --name my-style           # 学排版主题
 wewrite validate article.html                       # 微信兼容性校验
+wewrite output-check                                # 校验 ~/.wewrite/output 的目录契约
 wewrite diagnose                                    # 环境 + 配置自检
 wewrite run start/list/resume/show/finish/permission # 独立文章任务、恢复与发布授权
 wewrite sources add/list                            # 保存和查看事实来源
@@ -336,7 +353,7 @@ Step 6  封存原始正文 → 写入历史                         ← 主入�
 默认连续完成正文，但“写一篇”只交付本地成稿。“完整制作”是正文、配图和本地预览三个独立
 动作的组合快捷方式；“推到草稿箱”才授予发布权限，而且不会自动生图。已完成文章可以继续
 配图、排版或发布，原始正文不被覆盖。每篇文章使用独立任务目录并可恢复（契约见
-[`skills/wewrite/references/pipeline-state.md`](https://github.com/imraywang/wewrite/blob/main/skills/wewrite/references/pipeline-state.md)）。
+[`skills/wewrite/references/pipeline-state.md`](skills/wewrite/references/pipeline-state.md)）。
 
 <details>
 <summary><b>📁 目录结构</b></summary>
@@ -382,16 +399,10 @@ cd <仓库路径> && git pull && bash install.sh
 
 从 v2.1 及更早版本升级时，install.sh 会自动把仓库里的旧用户状态迁到 `~/.wewrite/`。
 
-## ⭐ Star History
-
-[![Star History](https://raw.githubusercontent.com/imraywang/wewrite/main/docs/star-history.svg)](https://star-history.com/#imraywang/wewrite&Date)
-
-<sub>图表自托管：GitHub 新的 API 限制下，star-history.com 需自备 fine-grained PAT，而 README 嵌入无法安全携带 token——本图由 [CI](.github/workflows/star-history.yml) 用仓库自身 token 每周刷新；点击可看交互版。</sub>
-
 ## 🤝 贡献
 
 Issue / PR 欢迎。跑 `python3 -m pytest tests/ -q` 与 `python3 scripts/context_budget.py --budget-tokens 15500` 保持绿灯（CI 同款检查）。
 
 ## 📄 License
 
-MIT
+MIT。本项目基于 [imraywang/wewrite](https://github.com/imraywang/wewrite)，上游版权归 OpenClaw；本仓库的修改与持续开发由 Madara 维护。详见 [NOTICE](NOTICE)。

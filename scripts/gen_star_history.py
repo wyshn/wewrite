@@ -138,7 +138,7 @@ def render_svg(dates: list[date], repo: str) -> str:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="生成自托管 star history SVG")
-    ap.add_argument("--repo", default="imraywang/wewrite")
+    ap.add_argument("--repo", default="wyshn/wewrite")
     ap.add_argument("-o", "--output", default=str(REPO_ROOT / "docs" / "star-history.svg"))
     args = ap.parse_args()
 

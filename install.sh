@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
 # WeWrite 安装脚本（v2.2 起）：wewrite CLI + skill 符号链接 + 旧状态迁移
 #
-# 1) 安装 `wewrite` CLI（确定性工具层，pip 包）：
+# 1) 安装 `wewrite` CLI（确定性工具层）：
 #    优先 uv tool install，其次 pipx；都没有则回退仓库内 venv +
 #    editable 安装并链接到 ~/.local/bin（绕过 macOS PEP 668）。
-#    在 dist 拷贝（无 pyproject.toml）里运行时自动改为从 git 安装。
+#    在 dist 拷贝（无 pyproject.toml）里运行时自动改为从本仓库 git 安装。
 # 2) 把 skills/ 下的主入口与各 wewrite-* 模块符号链接到
-#    ~/.claude/skills/ 和 ~/.agents/skills/（可用环境变量覆盖）；
-#    检测到 OpenClaw / Codex 时（~/.openclaw、~/.codex 存在）同样链接——
-#    三家均原生支持 folder-per-skill 的 Agent Skills 标准。
+#    ~/.codebuddy/skills、~/.claude/skills 和 ~/.agents/skills（可用环境变量覆盖）；
+#    检测到 OpenClaw / Codex 时（~/.openclaw、~/.codex 存在）同样链接。
 # 3) 检测到 v2.1 之前留在仓库根的用户状态（style.yaml 等）时，
 #    执行 `wewrite migrate` 迁到 $WEWRITE_HOME（默认 ~/.wewrite，幂等）。
 #
@@ -20,10 +19,10 @@ set -euo pipefail
 cd "$(dirname "$0")"
 REPO="$(pwd)"
 
-# 本地仓库（有 pyproject）从本地装最新代码；dist 拷贝等场景装 PyPI 发布版
-PYPI_SRC="wewrite"
+# 本地仓库（有 pyproject）从本地装最新代码；dist 拷贝等场景从本仓库 git 安装
+FALLBACK_SRC="git+https://github.com/wyshn/wewrite.git"
 SRC="$REPO"
-[ -f "$REPO/pyproject.toml" ] || SRC="$PYPI_SRC"
+[ -f "$REPO/pyproject.toml" ] || SRC="$FALLBACK_SRC"
 
 # ---- 1) wewrite CLI ----
 echo "→ 安装 wewrite CLI（来源: $SRC）..."
@@ -55,9 +54,13 @@ fi
 command -v wewrite >/dev/null 2>&1 && echo "✓ wewrite CLI 就绪：$(command -v wewrite)" \
   || echo "⚠ 当前 shell 尚未找到 wewrite，重开终端或检查 PATH" >&2
 
-# ---- 2) skill 链接：Claude Code + Agent-Skills 标准目录；
+# ---- 2) skill 链接：CodeBuddy / Claude Code / Agent-Skills 标准目录；
 #      装了 OpenClaw / Codex 的机器（其家目录已存在）也一并链接 ----
-DESTS=("${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}" "${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}")
+DESTS=(
+  "${CODEBUDDY_SKILLS_DIR:-$HOME/.codebuddy/skills}"
+  "${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"
+  "${AGENTS_SKILLS_DIR:-$HOME/.agents/skills}"
+)
 for OPT in "$HOME/.openclaw/skills" "$HOME/.codex/skills"; do
   [ -d "$(dirname "$OPT")" ] && DESTS+=("$OPT")
 done

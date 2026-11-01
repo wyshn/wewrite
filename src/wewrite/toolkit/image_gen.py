@@ -12,12 +12,15 @@ Supports multiple providers via a simple abstraction:
   - azure_openai — Azure-hosted DALL-E
   - openrouter — multi-model proxy
   - jimeng (ByteDance) — good for Chinese prompts
+  - dreamina (即梦 CLI) — 本机登录态 + 账号额度，无需 api_key
   - Custom providers via ImageProvider base class
 
 Usage as CLI:
     python3 image_gen.py --prompt "描述" --output cover.png
     python3 image_gen.py --prompt "描述" --output cover.png --size cover
     python3 image_gen.py --prompt "描述" --output cover.png --provider gemini
+    python3 image_gen.py --prompt "描述" --output cover.png --provider dreamina
+    python3 image_gen.py --prompt "改成水彩" --output cover.png --refs ref1.png ref2.png
 
 Usage as module:
     from image_gen import generate_image
@@ -30,7 +33,11 @@ import base64
 import hashlib
 import hmac
 import json
+import os
+import shutil
+import subprocess
 import sys
+import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
@@ -74,25 +81,34 @@ SIZE_PRESETS = {
         "doubao": "2952x1256", "openai": _DEFAULT, "gemini": _DEFAULT,
         "dashscope": _DEFAULT, "minimax": _DEFAULT, "replicate": _DEFAULT,
         "azure_openai": _DEFAULT, "openrouter": _DEFAULT, "jimeng": _DEFAULT,
+        # 即梦自定义尺寸单边下限 768，1920x816 是最接近 2.35:1 的稳定档位
+        "dreamina": "1920x816",
     },
     "article": {
         "doubao": "2560x1440", "openai": _DEFAULT, "gemini": _DEFAULT,
         "dashscope": _DEFAULT, "minimax": _DEFAULT, "replicate": _DEFAULT,
         "azure_openai": _DEFAULT, "openrouter": _DEFAULT, "jimeng": _DEFAULT,
+        "dreamina": "1440x810",
     },
     "vertical": {
         "doubao": "1088x2560", "openai": _DEFAULT_V, "gemini": _DEFAULT_V,
         "dashscope": _DEFAULT_V, "minimax": _DEFAULT_V, "replicate": _DEFAULT_V,
         "azure_openai": _DEFAULT_V, "openrouter": _DEFAULT_V, "jimeng": _DEFAULT_V,
+        "dreamina": "810x1440",
     },
     "square": {
         "doubao": "2048x2048", "openai": _DEFAULT_SQ, "gemini": _DEFAULT_SQ,
         "dashscope": _DEFAULT_SQ, "minimax": _DEFAULT_SQ, "replicate": _DEFAULT_SQ,
         "azure_openai": _DEFAULT_SQ, "openrouter": _DEFAULT_SQ, "jimeng": _DEFAULT_SQ,
+        "dreamina": "1024x1024",
     },
 }
 
-MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+# 微信 media/uploadimg 硬限 1MB；封面与正文都按这个上限收口
+MAX_FILE_SIZE = 1024 * 1024
+WECHAT_COVER_SIZE = (900, 383)
+WECHAT_COVER_RATIO = WECHAT_COVER_SIZE[0] / WECHAT_COVER_SIZE[1]
+WECHAT_BODY_WIDTH = 900
 
 
 def _mask_key(key: str) -> str:
@@ -112,16 +128,27 @@ def _sanitize_for_log(text: str) -> str:
     return text
 
 
-def _compress_image(raw_bytes: bytes, max_size: int) -> bytes:
-    """Compress image to fit under max_size by reducing JPEG quality."""
-    from io import BytesIO
+def _compress_image(raw_bytes: bytes, max_size: int, output_path: str = "") -> bytes:
+    """Compress image to fit under max_size, keeping the requested container format."""
     from PIL import Image
 
     img = Image.open(BytesIO(raw_bytes))
+    suffix = Path(output_path).suffix.lower() if output_path else ""
+
+    if suffix == ".png":
+        # 先原样优化；仍超标再降色。900px 级的封面/正文图通常走不到降色这一步。
+        for colors in (None, 256, 128):
+            target = img if colors is None else img.convert("P", palette=Image.ADAPTIVE, colors=colors)
+            buf = BytesIO()
+            target.save(buf, format="PNG", optimize=True)
+            if buf.tell() <= max_size:
+                return buf.getvalue()
+        return buf.getvalue()
+
     if img.mode == "RGBA":
         img = img.convert("RGB")
 
-    for quality in (90, 80, 70, 60, 50):
+    for quality in (90, 80, 70, 60, 50, 40):
         buf = BytesIO()
         img.save(buf, format="JPEG", quality=quality, optimize=True)
         if buf.tell() <= max_size:
@@ -130,7 +157,32 @@ def _compress_image(raw_bytes: bytes, max_size: int) -> bytes:
     return buf.getvalue()
 
 
-def _normalize_image(raw_bytes: bytes, output_path: str) -> bytes:
+def _apply_wechat_fit(img, preset: str):
+    """按微信展示规格裁切/缩放：封面 900x383，正文宽 900。显式 WxH 不改动。"""
+    from PIL import Image
+
+    if preset == "cover":
+        w, h = img.size
+        if w / h > WECHAT_COVER_RATIO:
+            new_w = max(1, round(h * WECHAT_COVER_RATIO))
+            left = (w - new_w) // 2
+            img = img.crop((left, 0, left + new_w, h))
+        else:
+            new_h = max(1, round(w / WECHAT_COVER_RATIO))
+            top = (h - new_h) // 2
+            img = img.crop((0, top, w, top + new_h))
+        return img.resize(WECHAT_COVER_SIZE, Image.LANCZOS)
+
+    if preset == "article":
+        w, h = img.size
+        if w > WECHAT_BODY_WIDTH:
+            new_h = max(1, round(h * WECHAT_BODY_WIDTH / w))
+            return img.resize((WECHAT_BODY_WIDTH, new_h), Image.LANCZOS)
+
+    return img
+
+
+def _normalize_image(raw_bytes: bytes, output_path: str, preset: str = "") -> bytes:
     """Validate image bytes and encode them to match the output extension."""
     from PIL import Image
 
@@ -139,6 +191,8 @@ def _normalize_image(raw_bytes: bytes, output_path: str) -> bytes:
         img.load()
     except Exception as exc:
         raise ValueError("Provider returned invalid image data") from exc
+
+    img = _apply_wechat_fit(img, preset)
 
     suffix = Path(output_path).suffix.lower()
     target_format = "PNG" if suffix == ".png" else "JPEG"
@@ -200,8 +254,9 @@ def _size_to_aspect(size: str) -> str:
     except ValueError:
         return "16:9"
     ratio = w / h
-    for ar, val in [("1:1", 1.0), ("16:9", 16/9), ("9:16", 9/16),
-                    ("4:3", 4/3), ("3:4", 3/4), ("3:2", 3/2), ("2:3", 2/3)]:
+    for ar, val in [("1:1", 1.0), ("21:9", 21/9), ("16:9", 16/9), ("9:16", 9/16),
+                    ("4:3", 4/3), ("3:4", 3/4), ("3:2", 3/2), ("2:3", 2/3),
+                    ("4:5", 4/5), ("5:4", 5/4)]:
         if abs(ratio - val) < 0.15:
             return ar
     return "16:9"
@@ -225,6 +280,8 @@ def _download_image(url: str) -> bytes:
 
 class ImageProvider(abc.ABC):
     """Base class for image generation providers."""
+
+    supports_refs = False
 
     @abc.abstractmethod
     def generate(self, prompt: str, size: str) -> bytes:
@@ -749,6 +806,170 @@ class Sub2APIProvider(ImageProvider):
         raise ValueError(f"Sub2API: task {task_id} timed out after {self._timeout:.0f}s")
 
 
+# --- Dreamina (即梦) CLI ---
+
+def _split_size(size: str) -> tuple[int, int] | None:
+    """Parse 'WxH' into a positive (w, h) tuple; return None for ratio strings."""
+    if "x" not in size:
+        return None
+    try:
+        w, h = (int(x) for x in size.split("x", 1))
+    except ValueError:
+        return None
+    return (w, h) if w > 0 and h > 0 else None
+
+
+def _parse_cli_json(text: str) -> dict | None:
+    """Parse CLI stdout that may contain log lines around a JSON object."""
+    raw = (text or "").strip()
+    if not raw:
+        return None
+    try:
+        data = json.loads(raw)
+        return data if isinstance(data, dict) else None
+    except json.JSONDecodeError:
+        pass
+    start, end = raw.find("{"), raw.rfind("}")
+    if start >= 0 and end > start:
+        try:
+            data = json.loads(raw[start:end + 1])
+            return data if isinstance(data, dict) else None
+        except json.JSONDecodeError:
+            return None
+    return None
+
+
+def _resolve_dreamina_binary(binary: str = "") -> str:
+    """Locate the dreamina CLI, tolerating a non-interactive PATH."""
+    if binary:
+        expanded = Path(binary).expanduser()
+        if expanded.exists():
+            return str(expanded)
+        found = shutil.which(binary)
+        if found:
+            return found
+
+    found = shutil.which("dreamina")
+    if found:
+        return found
+
+    fallback = Path.home() / ".local" / "bin" / "dreamina"
+    if fallback.exists():
+        return str(fallback)
+
+    raise ValueError(
+        "Dreamina CLI 未找到：请先安装并执行 `dreamina login`，"
+        "或在配置项里显式设置 binary。"
+    )
+
+
+def _run_dreamina(cmd: list[str], timeout: float) -> dict:
+    """Run a dreamina subcommand and parse its JSON stdout.
+
+    CLI 在业务失败时仍返回 exit 0，因此必须解析 gen_status，不能只看退出码。
+    """
+    env = dict(os.environ)
+    local_bin = str(Path.home() / ".local" / "bin")
+    if local_bin not in env.get("PATH", "").split(os.pathsep):
+        env["PATH"] = local_bin + os.pathsep + env.get("PATH", "")
+
+    try:
+        proc = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout, env=env,
+        )
+    except FileNotFoundError as exc:
+        raise ValueError(f"Dreamina CLI 不可执行: {cmd[0]}") from exc
+    except subprocess.TimeoutExpired as exc:
+        raise ValueError(f"Dreamina 命令超时（{timeout:.0f}s）") from exc
+
+    data = _parse_cli_json(proc.stdout)
+    if data is None:
+        detail = _sanitize_for_log((proc.stderr or proc.stdout or "").strip())[-300:]
+        raise ValueError(
+            f"Dreamina 返回无法解析（exit {proc.returncode}）: {detail or '无输出'}"
+        )
+    return data
+
+
+class DreaminaProvider(ImageProvider):
+    """即梦（Dreamina）CLI —— 复用本机 OAuth 登录态，不需要 api_key。
+
+    提交是异步的：text2image 先拿 submit_id，再用 query_result 下载。
+    要求本机已安装 `dreamina` 并完成 `dreamina login`。
+    """
+
+    provider_key = "dreamina"
+    supports_refs = True
+
+    def __init__(self, api_key: str = "", model: str = "5.0",
+                 binary: str = "", resolution: str = "2k",
+                 session: int = 0, poll: int = 120,
+                 timeout: float = 300, **_kw):
+        self._model = str(model or "5.0")
+        self._binary = _resolve_dreamina_binary(binary)
+        self._resolution = str(resolution or "2k")
+        self._session = int(session)
+        self._poll = int(poll)
+        self._timeout = float(timeout)
+
+    def generate(self, prompt: str, size: str,
+                 refs: list[str] | None = None) -> bytes:
+        refs = refs or []
+        cmd = [
+            self._binary, "image2image" if refs else "text2image",
+            f"--prompt={prompt}",
+            f"--model_version={self._model}",
+            f"--resolution_type={self._resolution}",
+            f"--session={self._session}",
+            "--generate_num=1",
+            f"--poll={self._poll}",
+        ]
+        for ref in refs:
+            cmd.append(f"--images={ref}")
+        dims = _split_size(size)
+        if dims:
+            cmd += [f"--width={dims[0]}", f"--height={dims[1]}"]
+        else:
+            cmd += [f"--ratio={size}"]
+
+        submitted = _run_dreamina(cmd, timeout=self._poll + 90)
+        status = submitted.get("gen_status")
+        submit_id = submitted.get("submit_id")
+        if status == "fail":
+            raise ValueError(f"Dreamina error: {submitted.get('fail_reason') or submitted}")
+        if not submit_id:
+            raise ValueError(f"Dreamina: no submit_id in response: {submitted}")
+
+        deadline = time.monotonic() + self._timeout
+        with tempfile.TemporaryDirectory(prefix="dreamina-") as tmp:
+            while True:
+                result = _run_dreamina(
+                    [self._binary, "query_result", f"--submit_id={submit_id}",
+                     f"--download_dir={tmp}"],
+                    timeout=120,
+                )
+                state = result.get("gen_status")
+                if state == "success":
+                    images = (result.get("result_json") or {}).get("images") or []
+                    if not images:
+                        raise ValueError(f"Dreamina: success without images: {result}")
+                    path = images[0].get("path")
+                    if path and Path(path).exists():
+                        return Path(path).read_bytes()
+                    url = images[0].get("image_url")
+                    if url:
+                        return _download_image(url)
+                    raise ValueError(f"Dreamina: no downloadable image: {result}")
+                if state == "fail":
+                    raise ValueError(f"Dreamina error: {result.get('fail_reason') or result}")
+                if time.monotonic() > deadline:
+                    raise ValueError(
+                        f"Dreamina timeout for submit_id={submit_id} "
+                        f"after {self._timeout:.0f}s"
+                    )
+                time.sleep(3)
+
+
 # --- Provider registry ---
 
 PROVIDERS = {
@@ -762,6 +983,7 @@ PROVIDERS = {
     "openrouter": OpenRouterProvider,
     "jimeng": JimengProvider,
     "sub2api": Sub2APIProvider,
+    "dreamina": DreaminaProvider,
 }
 
 
@@ -770,7 +992,8 @@ def _build_provider_from_entry(entry: dict) -> ImageProvider:
     provider_name = entry.get("provider", "doubao")
     api_key = entry.get("api_key")
 
-    if not api_key:
+    # dreamina 走本机 OAuth 登录态，不需要 api_key
+    if provider_name != "dreamina" and not api_key:
         raise ValueError(f"No api_key for provider '{provider_name}' (key not configured)")
 
     provider_cls = PROVIDERS.get(provider_name)
@@ -780,15 +1003,14 @@ def _build_provider_from_entry(entry: dict) -> ImageProvider:
             f"Available: {', '.join(PROVIDERS.keys())}"
         )
 
-    kwargs = {"api_key": api_key}
-    if entry.get("model"):
-        kwargs["model"] = entry["model"]
-    if entry.get("base_url"):
-        kwargs["base_url"] = entry["base_url"]
-    if entry.get("secret_key"):
-        kwargs["secret_key"] = entry["secret_key"]
-    if entry.get("deployment"):
-        kwargs["deployment"] = entry["deployment"]
+    kwargs = {}
+    if api_key:
+        kwargs["api_key"] = api_key
+    for key in ("model", "base_url", "secret_key", "deployment",
+                "resolution", "binary", "session", "poll", "timeout"):
+        value = entry.get(key)
+        if value not in (None, ""):
+            kwargs[key] = value
 
     return provider_cls(**kwargs)
 
@@ -834,11 +1056,30 @@ def _build_provider(config: dict) -> ImageProvider:
 
 # --- Public API ---
 
+def _normalize_refs(refs) -> list[str]:
+    """Validate reference image paths for image-to-image generation."""
+    if not refs:
+        return []
+    if isinstance(refs, (str, Path)):
+        refs = [refs]
+    if not isinstance(refs, (list, tuple)):
+        raise ValueError("refs 必须是本地图片路径列表")
+
+    paths = [str(Path(str(item)).expanduser()) for item in refs]
+    for path in paths:
+        if not Path(path).is_file():
+            raise ValueError(f"参考图不存在: {path}")
+    if len(paths) > 10:
+        raise ValueError("参考图最多 10 张")
+    return paths
+
+
 def generate_image(
     prompt: str,
     output_path: str,
     size: str = "cover",
     config: dict = None,
+    refs: list[str] | None = None,
 ) -> str:
     """
     Generate an image using configured providers with auto-fallback.
@@ -851,6 +1092,8 @@ def generate_image(
         output_path: Where to save the image.
         size: Size preset ("cover", "article", "vertical", "square") or explicit "WxH".
         config: Optional config dict. If None, loads from config.yaml.
+        refs: Optional local reference images (1-10) for image-to-image. Providers
+            without support ignore them and fall back to text-to-image.
 
     Returns:
         The output file path.
@@ -858,16 +1101,26 @@ def generate_image(
     if config is None:
         config = _load_config()
 
+    ref_images = _normalize_refs(refs)
     chain = _build_provider_chain(config)
     last_error = None
     max_retries = 2  # per provider
 
     for provider in chain:
         resolved_size = provider.resolve_size(size)
+        provider_refs = ref_images if getattr(provider, "supports_refs", False) else []
+        if ref_images and not provider_refs:
+            print(
+                f"Provider '{provider.provider_key}' 不支持参考图，忽略 refs。",
+                file=sys.stderr,
+            )
         raw_bytes = None
         for attempt in range(max_retries + 1):
             try:
-                raw_bytes = provider.generate(prompt, resolved_size)
+                if provider_refs:
+                    raw_bytes = provider.generate(prompt, resolved_size, refs=provider_refs)
+                else:
+                    raw_bytes = provider.generate(prompt, resolved_size)
                 break  # success
             except requests.exceptions.HTTPError as e:
                 if e.response is not None and e.response.status_code == 429 and attempt < max_retries:
@@ -923,11 +1176,11 @@ def generate_image(
         if raw_bytes is None:
             continue  # this provider failed all attempts, try the next one
 
-        raw_bytes = _normalize_image(raw_bytes, output_path)
+        raw_bytes = _normalize_image(raw_bytes, output_path, preset=size)
 
-        # Compress if over 5MB (WeChat upload limit)
+        # 微信 uploadimg 硬限 1MB；封面/正文已按展示规格缩放
         if len(raw_bytes) > MAX_FILE_SIZE:
-            raw_bytes = _compress_image(raw_bytes, MAX_FILE_SIZE)
+            raw_bytes = _compress_image(raw_bytes, MAX_FILE_SIZE, output_path)
 
         output = Path(output_path)
         output.parent.mkdir(parents=True, exist_ok=True)
@@ -945,7 +1198,8 @@ def generate_batch(items, config=None, max_workers=4, max_images=None, max_cost=
     把"并行"放进工具里（而非依赖编排模型一轮内发多个工具调用——实测模型做不到），
     一次调用即可生成全部配图：省掉 5-7 个串行轮次，并把每张 ~15s 的 API 等待并行化。
 
-    items: [{"prompt": str, "output": str, "size": str}]
+    items: [{"prompt": str, "output": str, "size": str, "refs": [str]}]
+    refs 可选：本地参考图路径（最多 10 张），有则走图生图。
     返回: [{"output": str, "ok": bool, "error"?: str}]，顺序与 items 对齐。
     """
     if config is None:
@@ -964,13 +1218,20 @@ def generate_batch(items, config=None, max_workers=4, max_images=None, max_cost=
     def _one(idx, it):
         try:
             path = generate_image(it["prompt"], it["output"],
-                                  size=it.get("size", "cover"), config=config)
+                                  size=it.get("size", "cover"), config=config,
+                                  refs=it.get("refs"))
             return idx, {"output": path, "ok": True}
         except Exception as e:  # noqa: BLE001 - 单张失败不拖垮整批
             return idx, {"output": it.get("output"), "ok": False,
                          "error": f"{type(e).__name__}: {e}"}
 
     workers = min(max_workers, max(1, len(items)))
+    try:
+        configured_workers = int((config.get("image") or {}).get("max_workers") or 0)
+    except (TypeError, ValueError):
+        configured_workers = 0
+    if configured_workers > 0:
+        workers = min(workers, configured_workers)
     with ThreadPoolExecutor(max_workers=workers) as ex:
         futs = [ex.submit(_one, i, it) for i, it in enumerate(items)]
         for f in as_completed(futs):
@@ -985,10 +1246,12 @@ def main():
     ap.add_argument("--output", help="Output file path (single mode)")
     ap.add_argument("--size", default="cover",
                     help="Size: cover, article, vertical, square, or WxH")
+    ap.add_argument("--refs", nargs="+", default=None,
+                    help="参考图路径（1-10 张）：有则走图生图，仅支持的 provider 生效")
     ap.add_argument("--provider", default=None,
                     help=f"Override provider ({', '.join(PROVIDERS)})")
     ap.add_argument("--manifest",
-                    help="JSON 文件 [{prompt,output,size}]：一次并发生成多张（推荐用于配图批量）")
+                    help="JSON 文件 [{prompt,output,size,refs}]：一次并发生成多张（推荐用于配图批量）")
     ap.add_argument("--max-images", type=int, help="本次最多生成多少张")
     ap.add_argument("--max-cost", type=float, help="本次允许的预估费用上限")
     args = ap.parse_args()
@@ -1014,7 +1277,8 @@ def main():
 
         if not args.prompt or not args.output:
             ap.error("single 模式需要 --prompt 和 --output；批量请用 --manifest")
-        path = generate_image(args.prompt, args.output, size=args.size, config=config)
+        path = generate_image(args.prompt, args.output, size=args.size,
+                              config=config, refs=args.refs)
         print(f"Image saved: {path}")
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)

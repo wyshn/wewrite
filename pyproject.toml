@@ -24,7 +24,8 @@ dependencies = [
 browser = ["playwright>=1.50", "camoufox[geoip]>=0.4"]
 
 [project.urls]
-Repository = "https://github.com/imraywang/wewrite"
+Repository = "https://github.com/wyshn/wewrite"
+Upstream = "https://github.com/imraywang/wewrite"
 
 [project.scripts]
 wewrite = "wewrite.cli:main"

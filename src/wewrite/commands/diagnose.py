@@ -14,6 +14,7 @@ import argparse
 import importlib
 import json
 import os
+import shutil
 import stat
 import sys
 from pathlib import Path
@@ -93,6 +94,19 @@ def _env_set(*names):
     return all(os.environ.get(n, "").strip() for n in names)
 
 
+def _dreamina_available(image, providers):
+    """dreamina 走本机 CLI 登录态，不需要 api_key；CLI 存在即视为可用。"""
+    selected = image.get("provider") == "dreamina" or any(
+        isinstance(entry, dict) and entry.get("provider") == "dreamina"
+        for entry in (providers or [])
+    )
+    if not selected:
+        return False
+    if shutil.which("dreamina"):
+        return True
+    return (Path.home() / ".local" / "bin" / "dreamina").exists()
+
+
 def check_config():
     """Group 2: Check config.yaml + env-injected secrets.
 
@@ -125,14 +139,16 @@ def check_config():
         checks.append(make_check("config", "wechat_credentials", "warn",
                                  "missing appid/secret", impact="skip_publish"))
 
-    # Image: legacy key, provider chain, or env key — any valid source enables images.
+    # Image: legacy key, provider chain, or dreamina CLI — any valid source enables images.
     image = cfg.get("image", {}) or {}
     providers = image.get("providers") or []
     provider_chain_configured = isinstance(providers, list) and any(
         isinstance(entry, dict) and entry.get("provider") and entry.get("api_key")
         for entry in providers
     )
-    if image.get("api_key") or provider_chain_configured or _env_set("WEWRITE_IMAGE_API_KEY"):
+    dreamina_configured = _dreamina_available(image, providers)
+    if (image.get("api_key") or provider_chain_configured or dreamina_configured
+            or _env_set("WEWRITE_IMAGE_API_KEY")):
         checks.append(make_check("config", "image_api_key", "pass", "configured"))
     else:
         checks.append(make_check("config", "image_api_key", "warn",
