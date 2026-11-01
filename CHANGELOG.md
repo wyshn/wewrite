@@ -4,6 +4,8 @@
 
 ## 4.3.0 — 2026-11-01
 
+> 发布页：[v4.3.0](https://github.com/wyshn/wewrite/releases/tag/v4.3.0)
+
 本版本把 wewrite 独立为可持续维护的 fork，并补齐 CodeBuddy 安装、即梦生图通道、微信图片后处理、排版修复与产出目录校验。
 
 ### 新增

@@ -405,7 +405,7 @@ Issue / PR 欢迎。跑 `python3 -m pytest tests/ -q` 与 `python3 scripts/conte
 
 ## 📝 更新日志
 
-当前版本 **4.3.0**。完整变更、方法与升级提示见 [CHANGELOG.md](CHANGELOG.md)。
+当前版本 **4.3.0**。完整变更、方法与升级提示见 [CHANGELOG.md](CHANGELOG.md)；发布说明见 [v4.3.0 Release](https://github.com/wyshn/wewrite/releases/tag/v4.3.0)。
 
 ## 📄 License
 
