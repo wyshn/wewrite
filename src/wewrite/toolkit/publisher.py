@@ -23,6 +23,7 @@ def create_draft(
     digest: str,
     thumb_media_id: Optional[str] = None,
     author: Optional[str] = None,
+    source_url: Optional[str] = None,
 ) -> DraftResult:
     """
     Create a draft in WeChat.
@@ -40,6 +41,9 @@ def create_draft(
         "content": html,
         "show_cover_pic": 0,
     }
+
+    if source_url:
+        article["content_source_url"] = source_url
 
     article["thumb_media_id"] = thumb_media_id
 

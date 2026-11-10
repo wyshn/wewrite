@@ -38,11 +38,11 @@ colors:
     quote_border: "#3db897"
     highlight_bg: "#2a2518"
 # --- 特殊标记 ---
-aigc_footer: true
+aigc_footer: false
 base_css: |
   body {
     font-family: 'Noto Serif SC', 'Source Han Serif SC', Georgia, 'Songti SC', 'SimSun', serif;
-    font-size: 17px;
+    font-size: 16px;
     line-height: 1.9;
     color: #3d4249;
     background: #ffffff;
@@ -80,13 +80,13 @@ base_css: |
     font-size: 19px;
     font-weight: 700;
     color: #1a6b5a;
-    margin: 24px 0 8px 0;
+    margin: 36px 0 12px 0;
     line-height: 1.4;
   }
 
   h4 {
     font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 600;
     color: #1c2024;
     margin: 20px 0 8px 0;
@@ -94,7 +94,7 @@ base_css: |
   }
 
   p {
-    font-size: 17px;
+    font-size: 16px;
     line-height: 1.9;
     color: #3d4249;
     margin: 0 0 24px 0;

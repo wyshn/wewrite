@@ -30,7 +30,8 @@ def _print_validation(body_html: str) -> None:
 
 def cmd_preview(args):
     """Generate HTML preview and open in browser."""
-    theme = load_theme(args.theme)
+    theme_name = args.theme or load_config().get("theme", "professional-clean")
+    theme = load_theme(theme_name)
     converter = WeChatConverter(
         theme=theme,
         aigc_footer=False if getattr(args, "no_aigc_footer", False) else None,
@@ -132,6 +133,7 @@ def cmd_publish(args):
         digest=digest,
         thumb_media_id=thumb_media_id,
         author=author,
+        source_url=getattr(args, "source_url", None),
     )
 
     print(f"\nDraft created! media_id: {draft.media_id}")
@@ -393,7 +395,7 @@ def main():
     # preview
     p_preview = sub.add_parser("preview", help="Generate HTML and open in browser")
     p_preview.add_argument("input", help="Markdown file path")
-    p_preview.add_argument("-t", "--theme", default="professional-clean", help="Theme name")
+    p_preview.add_argument("-t", "--theme", default=None, help="Theme name (defaults to config.yaml theme)")
     p_preview.add_argument("-o", "--output", help="Output HTML file path")
     p_preview.add_argument("--no-open", action="store_true", help="Don't open browser")
     p_preview.add_argument("--no-paste-safe", action="store_true", help="不做粘贴加固（leaf 包裹）")
@@ -410,6 +412,7 @@ def main():
     p_publish.add_argument("--author", default=None, help="Article author")
     p_publish.add_argument("--digest", default=None, help="Override article digest (≤120 UTF-8 bytes)")
     p_publish.add_argument("--no-aigc-footer", action="store_true", help="不追加文末 AI 声明")
+    p_publish.add_argument("--source-url", default=None, help="阅读原文链接（微信 content_source_url）")
 
     # themes
     sub.add_parser("themes", help="List available themes")
