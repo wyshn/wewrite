@@ -16,8 +16,10 @@
 | 目的 | 命令 |
 |---|---|
 | 安装/修复 | `bash install.sh` |
+| 首次开发环境 | `uv venv .venv && uv pip install -e . pytest --python .venv/bin/python` |
 | 全量测试 | `.venv/bin/python -m pytest tests/ -q` |
 | 单个契约测试 | `.venv/bin/python -m pytest tests/test_skill_contracts.py -q` |
+| 单个测试文件 | `.venv/bin/python -m pytest tests/test_converter.py -q` |
 | 上下文预算 | `.venv/bin/python scripts/context_budget.py --budget-tokens 15500` |
 | CLI 自检 | `wewrite diagnose --json` |
 
@@ -25,7 +27,7 @@
 
 ## Structure
 - `src/wewrite/cli.py` 只做「子命令名 → 模块」映射并透传参数；各命令模块保持独立 `argparse`，调度器不重复定义参数。
-- `skills/` 每个模块是独立指令包，只通过 `{home}` / `{skill_dir}` 解析路径，不写死本机路径。
+- `skills/` 每个模块是独立指令包；根路径用 `{home}` / `{skill_dir}`，任务内路径用 `{run_dir}`、`{article_path}` 等运行时变量，不写死本机路径。
 - `config.example.yaml` 是配置模板与唯一口径；真实配置在 `$WEWRITE_HOME/config.yaml`。
 
 ## Boundaries
@@ -43,8 +45,8 @@
 - 自动化：全量 pytest 通过；预算通过（当前约 6.4k < 15.5k）。
 - 实际做一遍（按改动选一条，记录观察而非打勾）：
   - 写作/审稿：用 `docs/evals.json` 任一用例跑完整流程，确认 `publishable=true`，记 run_id。
-  - 排版/主题：`wewrite preview docs/demo-article.md --theme <name>`，打开长图看一遍。
-  - 发布：`wewrite-aliyun-push ... --dry-run` 先看计划；真发需用户明确授权。
+  - 排版/主题：`wewrite preview docs/demo-article.md --theme professional-clean`，打开长图看一遍。
+  - 发布：`wewrite publish --help` 验证仓库入口；维护者本机再跑 `wewrite-aliyun-push ... --dry-run`（`scripts/aliyun-push.sh` 不入库，见 `docs/handover/DEPLOYMENT.md`）；真发需用户明确授权。
   - CLI：`wewrite diagnose --json` + 改动的子命令跑一条真实输入。
 - 交付写三段：改了什么 / 怎么验证 / 哪些没验证。
 

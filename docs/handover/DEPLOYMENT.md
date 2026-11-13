@@ -9,13 +9,13 @@
 
 ## 一键脚本
 
-入口：`wewrite-aliyun-push`（即 `scripts/aliyun-push.sh`，脚本头注释是用法与布局的单一事实源）。
+`scripts/aliyun-push.sh` 是维护者本机脚本（通过 `.git/info/exclude` 排除，不入库）。本机可直接 `bash scripts/aliyun-push.sh`，或使用别名 `wewrite-aliyun-push`；仓库内的通用发布入口是 `wewrite publish`。
 
 ```bash
-wewrite-aliyun-push article output/文章.md --cover output/cover.png --theme professional-clean
-wewrite-aliyun-push image poster.png -t "标题" -c "正文"
-wewrite-aliyun-push sync
-wewrite-aliyun-push article output/文章.md --cover output/cover.png --dry-run
+bash scripts/aliyun-push.sh article output/文章.md --cover output/cover.png --theme professional-clean
+bash scripts/aliyun-push.sh image poster.png -t "标题" -c "正文"
+bash scripts/aliyun-push.sh sync
+bash scripts/aliyun-push.sh article output/文章.md --cover output/cover.png --dry-run
 ```
 
 `--dry-run` 或 `WEWRITE_PUSH_DRY_RUN=1` 只打印计划，不实际上传和推送。真发前必须有用户明确授权。
@@ -40,7 +40,8 @@ SSH 主机别名默认 `aliyun`；可用 `WEWRITE_ALIYUN_HOST`、`WEWRITE_ALIYUN
 ## 验证
 
 ```bash
-wewrite-aliyun-push --help
-wewrite-aliyun-push article output/文章.md --cover output/cover.png --dry-run
+wewrite publish --help
+bash scripts/aliyun-push.sh --help
+bash scripts/aliyun-push.sh article output/文章.md --cover output/cover.png --dry-run
 ssh aliyun 'test -x /home/ecs-user/wewrite/bin/wewrite'
 ```
