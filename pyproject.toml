@@ -41,3 +41,6 @@ wewrite = [
     "toolkit/themes/*.yaml",
     "data/*.md",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]

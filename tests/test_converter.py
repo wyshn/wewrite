@@ -315,9 +315,10 @@ class TestDarkModeInjection:
 # ===================================================================
 
 class TestAIGCFooter:
-    def test_impeccable_has_aigc_footer(self, imp_converter):
+    def test_impeccable_has_no_aigc_footer(self, imp_converter):
+        # impeccable 主题从 039e9a8 起显式关闭 AIGC 脚注（aigc_footer: false）
         result = imp_converter.convert("# T\n\n内容")
-        assert "AI 辅助创作" in result.html
+        assert "AI 辅助创作" not in result.html
 
     def test_default_theme_has_aigc_footer(self, converter):
         """AIGC footer is appended by default (合规标识)，即使主题没显式开启。"""
