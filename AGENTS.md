@@ -23,7 +23,7 @@
 | 上下文预算 | `.venv/bin/python scripts/context_budget.py --budget-tokens 15500` |
 | CLI 自检 | `wewrite diagnose --json` |
 
-若 `python3` 没有 pytest，用 `.venv/bin/python`；CI 用 3.11。
+若 `python3` 没有 pytest，用 `.venv/bin/python`。没有 uv 时用 `python3 -m venv .venv && .venv/bin/python -m pip install -e . pytest`；CI 用 3.11。
 
 ## Structure
 - `src/wewrite/cli.py` 只做「子命令名 → 模块」映射并透传参数；各命令模块保持独立 `argparse`，调度器不重复定义参数。
