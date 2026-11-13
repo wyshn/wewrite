@@ -38,13 +38,16 @@ venv/
 # Local web tool dev: skill→backend venv symlink target + runtime image artifacts
 .artifacts/
 
-# Internal dev docs（README 引用的公开资产白名单放行）
+# Internal dev docs（README / AGENTS 引用的公开资产白名单放行）
 docs/*
 !docs/screenshots/
 !docs/demo-article.md
 !docs/star-history.svg
 !docs/evals.json
 !docs/content-quality-rubric.md
+!docs/PRODUCT.md
+!docs/handover/
+!docs/handover/DEPLOYMENT.md
 CLAUDE.md
 
 # IDE
