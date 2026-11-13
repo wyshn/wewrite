@@ -242,6 +242,14 @@ WeWrite 的目标是**写出准确、有观点、对读者有用的文章**。�
 `review-report.json`，方便追溯“为什么这样写”和初稿到成稿改了多少。完整标准见
 [`docs/content-quality-rubric.md`](docs/content-quality-rubric.md)。
 
+## 📚 项目文档
+
+- [docs/PRODUCT.md](docs/PRODUCT.md)：产品边界、三种模式与成功标准
+- [docs/content-quality-rubric.md](docs/content-quality-rubric.md)：内容质量验收口径
+- [docs/evals.json](docs/evals.json)：回归用例集
+- [docs/handover/DEPLOYMENT.md](docs/handover/DEPLOYMENT.md)：发布链路与远端布局
+- [AGENTS.md](AGENTS.md)：Agent 开工说明与验收合同
+
 ## 🎨 排版引擎
 
 ```bash
@@ -379,9 +387,11 @@ wewrite/
 │   ├── commands/               # run / sources / diagnose / score / content-eval / hotspots / search-articles / seo / stats / learn-* / exemplar / fetch-article / llm-write / similarity / build-playbook
 │   └── toolkit/                # converter / theme / publisher / wechat_api / image_gen + 18 个内置主题
 │
+├── AGENTS.md                 # Agent 开工说明与验收合同
+├── docs/                     # 产品说明、质量口径、回归用例、截图与部署交接
 ├── pyproject.toml            # CLI 打包定义
 ├── config.example.yaml       # API 配置模板
-├── scripts/                  # 仅开发工具（context_budget 预算门 / gen_star_history 图表）
+├── scripts/                  # 发布与开发工具（aliyun-push / context_budget / gen_star_history）
 └── tests/                    # 排版、任务流程、skill/README 契约与上下文预算测试
 ```
 
@@ -401,7 +411,7 @@ cd <仓库路径> && git pull && bash install.sh
 
 ## 🤝 贡献
 
-Issue / PR 欢迎。跑 `python3 -m pytest tests/ -q` 与 `python3 scripts/context_budget.py --budget-tokens 15500` 保持绿灯（CI 同款检查）。
+Issue / PR 欢迎。Agent 贡献先读 [AGENTS.md](AGENTS.md)；跑 `python3 -m pytest tests/ -q` 与 `python3 scripts/context_budget.py --budget-tokens 15500` 保持绿灯（CI 同款检查）。
 
 ## 📝 更新日志
 
