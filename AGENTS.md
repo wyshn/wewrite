@@ -8,7 +8,7 @@
 
 ## Context
 - 双身份：`skills/` 是分发给 Agent 的指令包（产品）；`src/wewrite/` 是确定性工具层（CLI + toolkit）。用户可感知的行为改 skills，确定性能力改 src，不要把流程塞进 CLI。
-- 10 个 skill = 主入口 `wewrite` + 9 个 `wewrite-*`；`install.sh` 只链接 `skills/wewrite*`。
+- `skills/` = 主入口 `wewrite` + `wewrite-*` 模块；`install.sh` 只链接 `skills/wewrite*`；具体清单以 `.claude-plugin/plugin.json` 为准。
 - 用户状态统一在 `wewrite home`（默认 `~/.wewrite`）：config/style/history/output/runs 等都在这里，仓库内不落用户状态。
 - 仓库 `wyshn/wewrite` fork 自 `imraywang/wewrite`；保留 `LICENSE`、`NOTICE` 与上游署名。
 
@@ -38,11 +38,11 @@
 ## Rules
 - 版本真源是 `VERSION`；`pyproject.toml` 动态读取。改版本必须同步 `.claude-plugin/plugin.json`、README 当前版本、`CHANGELOG.md`（`test_plugin_manifest_matches_release_and_skills` 会卡）。
 - 新增子命令必须同步 README（`test_readme_sync` 会卡）；新增主题同步 README 主题清单；退役文件清单见 `test_retired_v4_files_stay_removed`，不要复活。
-- `context_budget.py` 量的是「主入口 + 5 个流程模块 + 引用 + 默认人格」的完整流程静态文档（当前约 6.4k），不是单个 skill；纯开发参考登记在 `AUXILIARY`。
+- `context_budget.py` 量的是「主入口 + 5 个流程模块 + 引用 + 默认人格」的完整流程静态文档（数值以脚本输出为准），不是单个 skill；纯开发参考登记在 `AUXILIARY`。
 - skill 文案里的硬约束（默认不发布、排版/发布不自动生图、原始正文不被覆盖、不得把模型记忆标为 verified）是字符串契约，改措辞先看 `tests/test_skill_contracts.py`。
 
 ## Verification
-- 自动化：全量 pytest 通过；预算通过（当前约 6.4k < 15.5k）。
+- 自动化：全量 pytest 通过；预算通过（以 `context_budget.py` 输出为准，< 15500）。
 - 实际做一遍（按改动选一条，记录观察而非打勾）：
   - 写作/审稿：用 `docs/evals.json` 任一用例跑完整流程，确认 `publishable=true`，记 run_id。
   - 排版/主题：`wewrite preview docs/demo-article.md --theme professional-clean`，打开长图看一遍。
